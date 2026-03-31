@@ -9,8 +9,8 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # Database
-    database_url: str = "postgresql+asyncpg://pedidos:pedidos123@localhost:5432/orders_db"
+    # Database — required, no default intentionally
+    database_url: str
 
     # JWT — shared secret with auth-service; required, no default intentionally
     jwt_secret: str

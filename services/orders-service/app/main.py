@@ -7,11 +7,11 @@ from sqlalchemy import text
 
 import redis.asyncio as aioredis
 
-from app.api.v1.router import router as v1_router
+from app.core.cache import close_redis_pool, init_redis_pool
 from app.core.config import settings
 from app.core.database import engine
 from app.core.logging import configure_logging
-from app.core.redis import get_redis
+from app.routes.orders import router as orders_router
 
 configure_logging()
 
@@ -47,9 +47,9 @@ async def request_id_middleware(request: Request, call_next: object) -> Response
     return response
 
 
-@app.get("/health", tags=["health"])
+@app.get("/health", tags=["ops"])
 async def health() -> dict[str, str]:
-    # Check database
+    """Check database and Redis connectivity."""
     try:
         async with engine.connect() as conn:
             await conn.execute(text("SELECT 1"))
@@ -58,13 +58,13 @@ async def health() -> dict[str, str]:
         logger.exception("health_check_db_failed")
         db_status = "unavailable"
 
-    # Check Redis
+    from app.core.cache import _redis_pool
+
     redis_status = "unavailable"
     try:
-        client: aioredis.Redis = aioredis.from_url(settings.redis_url, decode_responses=True)  # type: ignore[type-arg]
-        await client.ping()
-        await client.aclose()
-        redis_status = "connected"
+        if _redis_pool is not None:
+            await _redis_pool.ping()
+            redis_status = "connected"
     except Exception:
         logger.exception("health_check_redis_failed")
 
@@ -77,9 +77,21 @@ async def health() -> dict[str, str]:
     }
 
 
-app.include_router(v1_router, prefix="/api/v1")
+@app.get("/ready", tags=["ops"])
+async def ready() -> dict[str, str]:
+    """Readiness probe — returns 200 when the service is ready to accept traffic."""
+    return {"status": "ready", "service": "orders-service"}
+
+
+app.include_router(orders_router)
 
 
 @app.on_event("startup")
 async def startup_event() -> None:
+    await init_redis_pool()
     logger.info("orders_service_started", env=settings.env)
+
+
+@app.on_event("shutdown")
+async def shutdown_event() -> None:
+    await close_redis_pool()

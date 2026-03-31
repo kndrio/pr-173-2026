@@ -1,4 +1,4 @@
-"""Smoke tests for orders endpoints — Constitution V compliance for Phase 2."""
+"""Smoke tests for orders endpoints — Constitution V compliance."""
 import pytest
 from httpx import AsyncClient
 
@@ -8,8 +8,8 @@ ORDER_PAYLOAD = {
     "customer_email": "joao@example.com",
     "description": "Pedido de teste",
     "items": [
-        {"name": "Produto A", "quantity": 2, "unit_price": 50.00},
-        {"name": "Produto B", "quantity": 1, "unit_price": 30.00},
+        {"name": "Produto A", "quantity": 2, "unit_price": "50.00"},
+        {"name": "Produto B", "quantity": 1, "unit_price": "30.00"},
     ],
     "priority": "alta",
 }
@@ -17,9 +17,9 @@ ORDER_PAYLOAD = {
 
 @pytest.mark.asyncio
 async def test_create_order_with_correct_total(client: AsyncClient) -> None:
-    """Creating an order computes total_amount = sum of item subtotals."""
-    response = await client.post("/api/v1/orders", json=ORDER_PAYLOAD)
-    assert response.status_code == 201
+    """POST /pedidos — total_amount = sum of item subtotals, status defaults to pendente."""
+    response = await client.post("/pedidos", json=ORDER_PAYLOAD)
+    assert response.status_code == 201, response.text
     data = response.json()
     assert data["customer_name"] == "João Silva"
     # 2 * 50.00 + 1 * 30.00 = 130.00
@@ -30,50 +30,66 @@ async def test_create_order_with_correct_total(client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_list_orders(client: AsyncClient) -> None:
-    """After creating an order, listing returns it in results."""
-    # Create one order first
-    create_resp = await client.post("/api/v1/orders", json=ORDER_PAYLOAD)
-    assert create_resp.status_code == 201
+    """GET /pedidos — returns list with at least the created order."""
+    await client.post("/pedidos", json=ORDER_PAYLOAD)
 
-    response = await client.get("/api/v1/orders")
-    assert response.status_code == 200
+    response = await client.get("/pedidos")
+    assert response.status_code == 200, response.text
     data = response.json()
     assert "items" in data
-    assert "total" in data
-    assert "page" in data
-    assert data["total"] >= 1
+    assert "total_count" in data
+    assert data["total_count"] >= 1
+
+
+@pytest.mark.asyncio
+async def test_get_order_by_id(client: AsyncClient) -> None:
+    """GET /pedidos/{id} — returns full order with items."""
+    create_resp = await client.post("/pedidos", json=ORDER_PAYLOAD)
+    order_id = create_resp.json()["id"]
+
+    response = await client.get(f"/pedidos/{order_id}")
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["id"] == order_id
+    assert len(data["items"]) == 2
+
+
+@pytest.mark.asyncio
+async def test_get_order_not_found(client: AsyncClient) -> None:
+    """GET /pedidos/{nonexistent_id} — returns 404."""
+    import uuid
+    response = await client.get(f"/pedidos/{uuid.uuid4()}")
+    assert response.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_valid_status_transition(client: AsyncClient) -> None:
-    """pendente → em_andamento is a valid transition."""
-    # Create order
-    create_resp = await client.post("/api/v1/orders", json=ORDER_PAYLOAD)
-    assert create_resp.status_code == 201
+    """PATCH /pedidos/{id} — pendente → em_andamento is valid."""
+    create_resp = await client.post("/pedidos", json=ORDER_PAYLOAD)
     order_id = create_resp.json()["id"]
 
-    # Transition: pendente → em_andamento
-    patch_resp = await client.patch(
-        f"/api/v1/orders/{order_id}/status",
-        json={"status": "em_andamento"},
-    )
-    assert patch_resp.status_code == 200
+    patch_resp = await client.patch(f"/pedidos/{order_id}", json={"status": "em_andamento"})
+    assert patch_resp.status_code == 200, patch_resp.text
     assert patch_resp.json()["status"] == "em_andamento"
 
 
 @pytest.mark.asyncio
 async def test_invalid_status_transition_returns_422(client: AsyncClient) -> None:
-    """concluido → em_andamento is invalid; should return 422."""
-    # Create and move to concluido
-    create_resp = await client.post("/api/v1/orders", json=ORDER_PAYLOAD)
+    """PATCH /pedidos/{id} — concluido → em_andamento must return 422."""
+    create_resp = await client.post("/pedidos", json=ORDER_PAYLOAD)
     order_id = create_resp.json()["id"]
-    await client.patch(f"/api/v1/orders/{order_id}/status", json={"status": "em_andamento"})
-    await client.patch(f"/api/v1/orders/{order_id}/status", json={"status": "concluido"})
 
-    # Attempt invalid transition
-    patch_resp = await client.patch(
-        f"/api/v1/orders/{order_id}/status",
-        json={"status": "em_andamento"},
-    )
+    await client.patch(f"/pedidos/{order_id}", json={"status": "em_andamento"})
+    await client.patch(f"/pedidos/{order_id}", json={"status": "concluido"})
+
+    patch_resp = await client.patch(f"/pedidos/{order_id}", json={"status": "em_andamento"})
     assert patch_resp.status_code == 422
     assert "Invalid status transition" in patch_resp.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_create_order_without_items_returns_422(client: AsyncClient) -> None:
+    """POST /pedidos with empty items list must return 422."""
+    payload = {**ORDER_PAYLOAD, "items": []}
+    response = await client.post("/pedidos", json=payload)
+    assert response.status_code == 422

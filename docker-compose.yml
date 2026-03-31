@@ -90,6 +90,7 @@ services:
   # Frontend
   # ---------------------------------------------------------------------------
   shell:
+    profiles: ["frontend"]
     build:
       context: ./frontend/shell
       dockerfile: Dockerfile
@@ -101,6 +102,7 @@ services:
     restart: unless-stopped
 
   orders-mfe:
+    profiles: ["frontend"]
     build:
       context: ./frontend/orders-mfe
       dockerfile: Dockerfile
