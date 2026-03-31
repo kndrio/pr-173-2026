@@ -61,6 +61,12 @@ async def health() -> dict[str, str]:
     }
 
 
+@app.get("/ready", tags=["health"])
+async def ready() -> dict[str, str]:
+    """Readiness probe — returns 200 when the service is ready to accept traffic."""
+    return {"status": "ready", "service": "auth-service"}
+
+
 app.include_router(v1_router, prefix="/api/v1")
 
 
