@@ -37,6 +37,12 @@ curl -X POST http://localhost:8001/api/v1/auth/login \
 - [ ] T001 Criar estrutura de diretórios do monorepo conforme plan.md: `services/auth-service/`, `services/orders-service/`, `frontend/shell/`, `frontend/orders-mfe/`, `docs/adr/` ~0.5h
   - **Critério**: Todas as pastas existem; `.gitignore` configurado ignorando `.env`, `__pycache__`, `node_modules`, `dist/`
 
+- [ ] T001a [P] Criar `services/auth-service/pyproject.toml` e `services/orders-service/pyproject.toml` com seções `[tool.ruff]` (rules: E, W, F, I; target-version: py311) e `[tool.mypy]` (strict = true, ignore_missing_imports = true) ~0.5h
+  - **Critério**: `ruff check app/` e `mypy app/` executam com as regras configuradas (não defaults); CI T081/T082 dependem deste arquivo existir
+
+- [ ] T001b [P] Criar `frontend/shell/eslint.config.js` e `frontend/orders-mfe/eslint.config.js` com regras: `@typescript-eslint/recommended`, `@typescript-eslint/no-explicit-any: error`, `react-hooks/rules-of-hooks: error` ~0.5h
+  - **Critério**: `eslint src/` em cada MFE executa com as regras definidas; CI T083 depende deste arquivo existir
+
 - [ ] T002 [P] Criar `.env.example` na raiz com todas as variáveis documentadas: `JWT_SECRET`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, `ANTHROPIC_API_KEY`, `ACCESS_TOKEN_EXPIRE_MINUTES`, `REDIS_URL` ~0.5h
   - **Critério**: Arquivo contém todas as variáveis com valores de exemplo; comentários explicativos; nenhum secret real no arquivo
 
@@ -75,8 +81,11 @@ curl -X POST http://localhost:8001/api/v1/auth/login \
 - [ ] T013 [US1] Criar `services/auth-service/app/api/v1/endpoints/users.py` com `GET /me` (retorna usuário autenticado) e `GET /users` (lista usuários ativos com paginação) ~0.5h
   - **Critério**: `/me` sem token → 401; `/me` com token válido → UserResponse; `/users` retorna lista com `total`, `page`, `pages`
 
-- [ ] T014 [US1] Criar `services/auth-service/app/main.py` com FastAPI app, CORS, `X-Request-ID` middleware, `GET /health` retornando status do banco, roteamento de endpoints ~1h
-  - **Critério**: `/health` retorna 200 com `{"status":"healthy","database":"connected"}`; CORS configurado para `http://localhost:3000`
+- [ ] T013a [US1] Criar `services/auth-service/app/core/logging.py` configurando structlog: `JSONRenderer` quando `ENV=production`, `ConsoleRenderer` quando `ENV=development`; função `configure_logging()` com campos obrigatórios `service="auth-service"`, `level`, `timestamp` ~0.5h
+  - **Critério**: `configure_logging()` chamado no startup do app; `structlog.get_logger().info("test")` emite JSON válido em ENV=production; Constitution VII satisfeita desde Phase 1
+
+- [ ] T014 [US1] Criar `services/auth-service/app/main.py` com FastAPI app, CORS (origem `http://localhost:3000`), middleware `X-Request-ID` (gera UUID4 se ausente, injeta em structlog context), `GET /health` retornando status do banco, roteamento de endpoints, chamada a `configure_logging()` no startup ~1h
+  - **Critério**: `/health` retorna 200 com `{"status":"healthy","database":"connected"}`; todo log de request inclui `request_id`; CORS aceita origem do shell
 
 - [ ] T015 [US1] Criar `services/auth-service/Dockerfile` multi-stage: stage `builder` (instala deps) + stage `runtime` (`python:3.11-slim`, usuário `appuser` non-root, copia só o necessário) ~1h
   - **Critério**: `docker build` completa sem erros; container roda como non-root (`docker exec ... whoami` ≠ `root`); tamanho final < 200MB
@@ -84,7 +93,10 @@ curl -X POST http://localhost:8001/api/v1/auth/login \
 - [ ] T016 [US1] Adicionar `auth-service` ao `docker-compose.yml` com build, env vars, port mapping `8001:8001`, depends_on postgres com condition `service_healthy` ~0.5h
   - **Critério**: `docker compose up auth-service` sobe com health check passando; migrations rodam no startup via `command: ["sh","-c","alembic upgrade head && uvicorn..."]`
 
-**Checkpoint Phase 1** ✅: Auth completo — registro, login, /me, listagem de usuários, health check. `docker compose up auth-service postgres redis` funciona.
+- [ ] T016a [US1] Criar `services/auth-service/tests/conftest.py` com fixtures básicas (async test client, DB de teste) e 3 testes mínimos em `tests/test_auth_smoke.py`: registro com sucesso, login com sucesso, login com senha errada (401) ~1h
+  - **Critério**: `pytest tests/test_auth_smoke.py -v` passa com 3 testes ✅; Constitution V satisfeita para Phase 1 — comportamentos de Phase 1 têm cobertura mínima antes de merge
+
+**Checkpoint Phase 1** ✅: Auth completo — registro, login, /me, listagem de usuários, health check, logging estruturado, testes mínimos. `docker compose up auth-service postgres redis` funciona.
 
 ---
 
@@ -168,8 +180,11 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:8002/api/v1/orders
 
 ### Orders — Main e Docker
 
-- [ ] T033 [US2] Criar `services/orders-service/app/main.py` com FastAPI app, CORS, `X-Request-ID` middleware, `GET /health` verificando DB e Redis, router ~0.5h
-  - **Critério**: `/health` retorna `{"status":"healthy","database":"connected","redis":"connected"}`
+- [ ] T032a [US2] Criar `services/orders-service/app/core/logging.py` (mesmo padrão do auth-service; campo `service="orders-service"`; propaga `request_id` recebido via header `X-Request-ID`) ~0.25h
+  - **Critério**: Logging estruturado configurado antes de T033 (main.py); Constitution VII satisfeita desde Phase 2
+
+- [ ] T033 [US2] Criar `services/orders-service/app/main.py` com FastAPI app, CORS (origem `http://localhost:3000`), middleware `X-Request-ID`, `GET /health` verificando DB e Redis, router, chamada a `configure_logging()` ~0.5h
+  - **Critério**: `/health` retorna `{"status":"healthy","database":"connected","redis":"connected"}`; logs incluem `request_id` e `service="orders-service"`
 
 - [ ] T034 [US2] Criar `services/orders-service/Dockerfile` multi-stage (python:3.11-slim, non-root) ~0.5h
   - **Critério**: `docker build` OK; non-root; tamanho < 200MB
@@ -177,7 +192,10 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:8002/api/v1/orders
 - [ ] T035 [US2] Adicionar `orders-service` ao `docker-compose.yml` com port `8002:8002`, depends_on postgres e redis healthy ~0.5h
   - **Critério**: `docker compose up orders-service` sobe; `curl http://localhost:8002/health` → 200
 
-**Checkpoint Phase 2** ✅: Backend completo. Todos os endpoints funcionam via curl. Redis caching e eventos ativos.
+- [ ] T035a [US2] Criar `services/orders-service/tests/conftest.py` com fixtures (async test client, DB de teste, Redis mockado) e 3 testes mínimos em `tests/test_orders_smoke.py`: criar pedido com total correto, listar pedidos, transição de status válida ~1h
+  - **Critério**: `pytest tests/test_orders_smoke.py -v` passa com 3 testes ✅; Constitution V satisfeita para Phase 2
+
+**Checkpoint Phase 2** ✅: Backend completo, logging estruturado ativo, testes mínimos passando. Todos os endpoints funcionam via curl. Redis caching e eventos ativos.
 
 ---
 
@@ -317,8 +335,8 @@ Fluxo completo: login → criar pedido com 3 itens → listar → filtrar por st
 - [ ] T065 Integrar seed no `docker-compose.yml` como serviço `seeder` com `depends_on` auth-service e orders-service, `restart: "no"` ~0.5h
   - **Critério**: `docker compose up` executa seed automaticamente na primeira inicialização; re-runs são idempotentes
 
-- [ ] T066 Configurar CORS no auth-service e orders-service para aceitar `http://localhost:3000`; injetar token JWT em todas as chamadas axios do frontend via interceptor ~0.5h
-  - **Critério**: Chamadas do frontend (porta 3000) não geram erros CORS; token incluído automaticamente após login
+- [ ] T066 Configurar interceptor axios global no frontend: adicionar header `Authorization: Bearer <token>` em todas as chamadas (lendo do authStore), e interceptor de resposta para 401 (limpar store + redirect para `/login`) ~0.5h
+  - **Critério**: Token incluído automaticamente após login em todas as chamadas; sessão expirada redireciona para `/login` sem ação manual; CORS já está configurado desde T014/T033 (Phase 1/2)
 
 - [ ] T067 Implementar error handling global no frontend: interceptor axios para 401 (redirect login), 422 (exibir erros de validação), 500 (mensagem genérica amigável); `ErrorBoundary` nos MFEs ~1h
   - **Critério**: Sessão expirada → redirect automático para `/login`; erro 422 do servidor → campos com erros destacados; erro 500 → toast/banner com mensagem amigável
@@ -385,8 +403,8 @@ Fluxo completo: login → criar pedido com 3 itens → listar → filtrar por st
 - [ ] T083 [P] Criar `.github/workflows/frontend.yml` com jobs para shell e orders-mfe: `npm ci`, `tsc --noEmit`, `eslint src/`, `npm run build` ~1h
   - **Critério**: Type errors ou lint errors bloqueiam build
 
-- [ ] T084 [P] Implementar logging estruturado completo: criar `services/auth-service/app/core/logging.py` e `services/orders-service/app/core/logging.py` configurando structlog com `JSONRenderer` (ENV=production) ou `ConsoleRenderer` (development); middleware X-Request-ID em ambos os serviços ~1h
-  - **Critério**: Todo log em produção é JSON válido com campos `service`, `level`, `timestamp`, `request_id`; request_id aparece em todos os logs do mesmo request
+- [ ] T084 [P] Verificar e completar cobertura de logging: auditar todos os endpoints de ambos os serviços garantindo que operações críticas (criação de pedido, update de status, análise IA, falhas de auth) emitem logs estruturados com `request_id`; adicionar logs ausentes ~0.5h
+  - **Critério**: `docker compose logs orders-service` em ENV=production exibe JSON válido para cada request; `request_id` rastreável de ponta a ponta entre auth e orders; logging.py já criado em T013a/T032a — esta task completa a cobertura
 
 **Checkpoint Phase 5** ✅: Testes passando, CI configurado, análise IA funcionando, logs estruturados.
 
@@ -523,13 +541,15 @@ Task "T020: orders-service/app/core/redis.py"
 
 | Fase | Tarefas | Estimativa | Marco |
 |------|---------|------------|-------|
-| Phase 1 — Fundação | T001–T016 (16 tarefas) | ~12h | Auth completo + docker-compose |
-| Phase 2 — Orders Backend | T017–T035 (19 tarefas) | ~14h | Backend completo via curl |
+| Phase 1 — Fundação | T001–T016a (20 tarefas) | ~15h | Auth completo + logging + testes mínimos |
+| Phase 2 — Orders Backend | T017–T035a (22 tarefas) | ~16h | Backend completo + logging + testes mínimos |
 | Phase 3 — Frontend | T036–T063 (28 tarefas) | ~22h | Fluxo completo no browser |
-| Phase 4 — Integração | T064–T070 (7 tarefas) | ~7h | Versão entregável |
-| Phase 5 — Qualidade | T071–T084 (14 tarefas) | ~14h | Testes + CI + IA |
+| Phase 4 — Integração | T064–T070 (7 tarefas) | ~6.5h | Versão entregável |
+| Phase 5 — Qualidade | T071–T084 (14 tarefas) | ~12.5h | Testes completos + CI + IA |
 | Phase 6 — Docs + Polish | T085–T093 (9 tarefas) | ~8h | Entrega final |
-| **Total** | **93 tarefas** | **~77h** | — |
+| **Total** | **100 tarefas** | **~80h** | — |
+
+*+7 tarefas adicionadas pela remediação: T001a, T001b, T013a, T016a, T032a, T035a (novas) + T084 convertida de setup para verificação.*
 
 ---
 

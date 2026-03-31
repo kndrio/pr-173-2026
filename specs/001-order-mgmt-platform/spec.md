@@ -148,7 +148,7 @@ Um administrador precisa visualizar os usuários cadastrados na plataforma para 
 - **FR-012**: O sistema DEVE suportar quatro níveis de prioridade: baixa, média, alta e urgente.
 - **FR-013**: O sistema DEVE permitir listagem de pedidos com paginação, filtro combinável por status e por prioridade, e ordenação por data de criação.
 - **FR-014**: O sistema DEVE permitir consulta de um pedido específico por identificador, retornando todos os seus dados incluindo a lista completa de itens.
-- **FR-015**: O sistema DEVE permitir atualização de status respeitando as seguintes transições válidas: pendente → em_andamento → concluido; e de qualquer estado → cancelado.
+- **FR-015**: O sistema DEVE permitir atualização de status respeitando as seguintes transições válidas: pendente → em_andamento; em_andamento → concluido; pendente → cancelado; em_andamento → cancelado. Pedidos com status `concluido` ou `cancelado` são **estados finais imutáveis** — nenhuma transição é permitida a partir deles.
 - **FR-016**: O sistema DEVE rejeitar transições de status inválidas, retornando mensagem de erro descritiva.
 - **FR-017**: O sistema DEVE manter listagens em cache para otimizar o desempenho, invalidando automaticamente o cache quando pedidos são criados ou atualizados.
 - **FR-018**: O sistema DEVE emitir notificações de eventos quando pedidos são criados (order_created) ou atualizados (order_updated), permitindo integração com outros sistemas.
@@ -186,7 +186,7 @@ Um administrador precisa visualizar os usuários cadastrados na plataforma para 
 
 - **Usuário**: Representa uma pessoa com acesso à plataforma. Possui nome completo, email (único), senha (protegida), papel (operador/gestor/administrador) e status ativo/inativo.
 - **Pedido**: Representa uma solicitação registrada. Possui identificador único, dados do cliente (nome, email), descrição, lista de itens, valor total calculado, prioridade, status (pendente/em_andamento/concluido/cancelado), observações, data de criação e data de última atualização.
-- **Item de Pedido**: Componente de um pedido representando um produto ou serviço. Possui nome, quantidade e preço unitário. O subtotal (quantidade × preço) é derivado, não armazenado separadamente.
+- **Item de Pedido**: Componente de um pedido representando um produto ou serviço. Possui nome, quantidade e preço unitário. O subtotal (quantidade × preço) é calculado e armazenado no momento da criação do pedido para eficiência de consulta.
 - **Evento de Pedido**: Notificação emitida para sistemas externos quando o estado de um pedido muda. Contém tipo de evento, identificador do pedido afetado e timestamp do evento.
 
 ---
