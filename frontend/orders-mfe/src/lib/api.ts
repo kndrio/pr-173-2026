@@ -28,9 +28,17 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error: unknown) => {
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
-      setAuthToken(null)
-      window.location.href = '/'
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status
+      if (status === 401) {
+        setAuthToken(null)
+        // Redirect to Shell login (works in both standalone and federated modes)
+        window.location.href = '/login'
+      } else if (status !== undefined && status >= 500) {
+        // Preserve the AxiosError so axios.isAxiosError() still returns true downstream;
+        // attach a user-friendly message for components to display.
+        Object.assign(error, { userMessage: 'Erro no servidor. Tente novamente mais tarde.' })
+      }
     }
     return Promise.reject(error)
   },

@@ -86,6 +86,22 @@ services:
       start_period: 30s
     restart: unless-stopped
 
+  # Seed database with demo users and orders (runs once, idempotent)
+  seeder:
+    build:
+      context: ./services/orders-service
+      dockerfile: Dockerfile
+    command: ["sh", "-c", "sleep 5 && python scripts/seed.py"]
+    environment:
+      AUTH_URL: http://auth-service:8001
+      ORDERS_URL: http://orders-service:8002
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      orders-service:
+        condition: service_healthy
+    restart: "no"
+
   # ---------------------------------------------------------------------------
   # Frontend
   # ---------------------------------------------------------------------------
