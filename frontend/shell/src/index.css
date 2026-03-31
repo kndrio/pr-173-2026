@@ -1,0 +1,242 @@
+/* DSGOV — Design System do Governo Federal color tokens */
+:root {
+  --color-primary: #1351b4;
+  --color-primary-dark: #0c326f;
+  --color-primary-light: #2670e8;
+  --color-secondary: #155bcb;
+  --color-surface: #ffffff;
+  --color-background: #f8f8f8;
+  --color-text: #1a1a1a;
+  --color-text-secondary: #636363;
+  --color-border: #d4d4d4;
+  --color-danger: #e52207;
+  --color-success: #168821;
+  --color-warning: #f0ad00;
+  --color-info: #155bcb;
+
+  /* Status colors */
+  --status-pendente: #f0ad00;
+  --status-pendente-bg: #fff5cc;
+  --status-em-andamento: #155bcb;
+  --status-em-andamento-bg: #d4e4ff;
+  --status-concluido: #168821;
+  --status-concluido-bg: #d4edda;
+  --status-cancelado: #e52207;
+  --status-cancelado-bg: #fde0dc;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+
+  /* Border */
+  --border-radius: 4px;
+  --border-radius-lg: 8px;
+
+  /* Shadow */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Rawline', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text);
+  background-color: var(--color-background);
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  border: none;
+  border-radius: var(--border-radius);
+  padding: 8px 16px;
+  transition: background-color 0.2s, opacity 0.2s;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+input, select, textarea {
+  font-family: inherit;
+  font-size: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  padding: 8px 12px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(19, 81, 180, 0.2);
+}
+
+label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  margin-bottom: 4px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+  padding: 10px 12px;
+  background-color: var(--color-background);
+  border-bottom: 2px solid var(--color-border);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-secondary);
+}
+
+td {
+  padding: 12px;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+}
+
+tr:hover td {
+  background-color: #f0f4ff;
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+  font-weight: 600;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--color-primary-dark);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  font-weight: 600;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: rgba(19, 81, 180, 0.05);
+}
+
+.btn-danger {
+  background-color: var(--color-danger);
+  color: white;
+  font-weight: 600;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: #c41a06;
+}
+
+.btn-success {
+  background-color: var(--color-success);
+  color: white;
+  font-weight: 600;
+}
+
+.btn-success:hover:not(:disabled) {
+  background-color: #116618;
+}
+
+.card {
+  background: var(--color-surface);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--spacing-lg);
+}
+
+.form-group {
+  margin-bottom: var(--spacing-md);
+}
+
+.error-message {
+  color: var(--color-danger);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.alert {
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+  margin-bottom: var(--spacing-md);
+  font-size: 14px;
+}
+
+.alert-error {
+  background-color: var(--status-cancelado-bg);
+  color: var(--color-danger);
+  border: 1px solid var(--status-cancelado);
+}
+
+.alert-success {
+  background-color: var(--status-concluido-bg);
+  color: var(--color-success);
+  border: 1px solid var(--status-concluido);
+}
+
+.spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.spinner-dark {
+  border-color: rgba(0,0,0,0.1);
+  border-top-color: var(--color-primary);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.text-muted { color: var(--color-text-secondary); }
+.mt-sm { margin-top: var(--spacing-sm); }
+.mt-md { margin-top: var(--spacing-md); }
+.mt-lg { margin-top: var(--spacing-lg); }
+.mb-md { margin-bottom: var(--spacing-md); }
+.flex { display: flex; }
+.flex-1 { flex: 1; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-sm { gap: var(--spacing-sm); }
+.gap-md { gap: var(--spacing-md); }
+.w-full { width: 100%; }
