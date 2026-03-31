@@ -30,7 +30,7 @@ jobs:
       - name: Run tests
         run: pytest services/${{ matrix.service }}/tests/ -v
         env:
-          DATABASE_URL: sqlite+aiosqlite:///:memory:
+          DATABASE_URL: "sqlite+aiosqlite:///:memory:"
           JWT_SECRET: test-secret-key-for-ci
           REDIS_URL: redis://localhost:6379/0
 
