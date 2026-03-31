@@ -33,7 +33,7 @@ RUN useradd -m -u 1001 appuser && chown -R appuser:appuser /app
 COPY --chown=appuser:appuser alembic.ini .
 COPY --chown=appuser:appuser alembic/ alembic/
 COPY --chown=appuser:appuser app/ app/
-COPY --chown=appuser:appuser services/ services/
+COPY --chown=appuser:appuser tests/ tests/
 
 USER appuser
 
