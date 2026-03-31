@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { fetchOrder, updateOrder } from '../lib/api'
 import type { Order, OrderStatus } from '../types/order'
 import { STATUS_LABELS, VALID_TRANSITIONS } from '../types/order'
+import AISummary from './AISummary'
 import { PriorityBadge, StatusBadge } from './StatusBadge'
 
 const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v)
@@ -72,11 +73,7 @@ export default function OrderDetail() {
               </div>
             </div>
           )}
-          <div className="card" style={{ background: '#f5f0ff', border: '1px solid #c4a8ff' }}>
-            <h2 style={{ fontSize: '15px', fontWeight: '600', marginBottom: '8px', color: '#6b35d1' }}>Analisar com IA</h2>
-            <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', marginBottom: '10px' }}>Claude AI — análise de prioridade e resumo executivo.</p>
-            <button disabled style={{ background: '#c4a8ff', color: 'white', border: 'none', padding: '6px 14px', borderRadius: '4px', cursor: 'not-allowed', opacity: 0.7, fontSize: '13px' }}>🤖 Analisar (Fase 5)</button>
-          </div>
+          <AISummary orderId={order.id} />
         </div>
 
         <div className="card">

@@ -83,3 +83,16 @@ export async function updateOrder(id: string, payload: UpdateOrderPayload): Prom
   const { data } = await api.patch<Order>(`/orders/pedidos/${id}`, payload)
   return data
 }
+
+export interface AIAnalysisResponse {
+  suggested_priority: string
+  executive_summary: string
+  observations: string[]
+  model_used: string
+  analyzed_at: string
+}
+
+export async function analyzeOrder(id: string): Promise<AIAnalysisResponse> {
+  const { data } = await api.post<AIAnalysisResponse>(`/orders/pedidos/${id}/ai-analysis`)
+  return data
+}

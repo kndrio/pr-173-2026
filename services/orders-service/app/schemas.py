@@ -72,3 +72,11 @@ class OrderListResponse(BaseModel):
     total_count: int
     page: int
     page_size: int
+
+
+class AIAnalysisResponse(BaseModel):
+    suggested_priority: Priority  # validated against enum — rejects unexpected AI output
+    executive_summary: str
+    observations: list[str]
+    model_used: str
+    analyzed_at: datetime

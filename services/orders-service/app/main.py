@@ -11,6 +11,7 @@ from app.core.cache import close_redis_pool, init_redis_pool
 from app.core.config import settings
 from app.core.database import engine
 from app.core.logging import configure_logging
+from app.routes.ai import router as ai_router
 from app.routes.orders import router as orders_router
 
 configure_logging()
@@ -84,6 +85,7 @@ async def ready() -> dict[str, str]:
 
 
 app.include_router(orders_router)
+app.include_router(ai_router)
 
 
 @app.on_event("startup")
