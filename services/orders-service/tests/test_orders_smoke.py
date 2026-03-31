@@ -1,4 +1,6 @@
 """Smoke tests for orders endpoints — Constitution V compliance."""
+import uuid
+
 import pytest
 from httpx import AsyncClient
 
@@ -57,7 +59,6 @@ async def test_get_order_by_id(client: AsyncClient) -> None:
 @pytest.mark.asyncio
 async def test_get_order_not_found(client: AsyncClient) -> None:
     """GET /pedidos/{nonexistent_id} — returns 404."""
-    import uuid
     response = await client.get(f"/pedidos/{uuid.uuid4()}")
     assert response.status_code == 404
 
@@ -85,6 +86,28 @@ async def test_invalid_status_transition_returns_422(client: AsyncClient) -> Non
     patch_resp = await client.patch(f"/pedidos/{order_id}", json={"status": "em_andamento"})
     assert patch_resp.status_code == 422
     assert "Invalid status transition" in patch_resp.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_list_orders_filter_status(client: AsyncClient) -> None:
+    """GET /pedidos?status=pendente — returns only orders with that status."""
+    await client.post("/pedidos", json=ORDER_PAYLOAD)
+    create_resp = await client.post("/pedidos", json=ORDER_PAYLOAD)
+    order_id = create_resp.json()["id"]
+    await client.patch(f"/pedidos/{order_id}", json={"status": "em_andamento"})
+
+    response = await client.get("/pedidos", params={"status": "pendente"})
+    assert response.status_code == 200
+    data = response.json()
+    assert all(item["status"] == "pendente" for item in data["items"])
+
+
+@pytest.mark.asyncio
+async def test_unauthenticated_returns_401(unauth_client: AsyncClient) -> None:
+    """GET /pedidos without token must return 401."""
+    response = await unauth_client.get("/pedidos")
+    assert response.status_code == 401
+    assert "detail" in response.json()
 
 
 @pytest.mark.asyncio

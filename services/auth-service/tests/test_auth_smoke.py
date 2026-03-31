@@ -37,6 +37,23 @@ async def test_login_success(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
+async def test_register_duplicate_email(client: AsyncClient) -> None:
+    payload = {"full_name": "Dup User", "email": "dup@example.com", "password": "securepass123"}
+    await client.post("/api/v1/auth/register", json=payload)
+    response = await client.post("/api/v1/auth/register", json=payload)
+    assert response.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_get_me(client: AsyncClient, auth_headers: dict[str, str]) -> None:
+    response = await client.get("/api/v1/users/me", headers=auth_headers)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["email"] == "me@example.com"
+    assert "hashed_password" not in data
+
+
+@pytest.mark.asyncio
 async def test_login_wrong_password_returns_401(client: AsyncClient) -> None:
     await client.post(
         "/api/v1/auth/register",

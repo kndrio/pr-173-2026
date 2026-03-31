@@ -38,16 +38,19 @@ async def test_engine():
 
 @pytest_asyncio.fixture
 async def db_session(test_engine) -> AsyncGenerator[AsyncSession, None]:  # type: ignore[no-untyped-def]
-    factory = async_sessionmaker(test_engine, expire_on_commit=False)
-    async with factory() as session:
+    # Bind to an open connection and begin a transaction; rollback at teardown
+    # so that even committed writes from endpoint code are rolled back.
+    async with test_engine.connect() as conn:
+        await conn.begin()
+        session = AsyncSession(conn, expire_on_commit=False)
         yield session
-        await session.rollback()
+        await conn.rollback()
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture
 async def fake_redis_client() -> AsyncGenerator[fakeredis.FakeRedis, None]:
+    # Function-scoped so each test starts with a clean Redis state (no cache pollution).
     redis = fakeredis.FakeRedis(decode_responses=True)
-    # Inject into module-level pool so /health check and startup work in tests
     cache_module._redis_pool = redis  # type: ignore[assignment]
     yield redis
     await redis.aclose()
@@ -62,6 +65,30 @@ def _make_token(user_id: uuid.UUID | None = None) -> str:
         "exp": datetime.now(timezone.utc) + timedelta(hours=1),
     }
     return jwt.encode(payload, settings.jwt_secret, algorithm="HS256")
+
+
+@pytest_asyncio.fixture
+async def unauth_client(
+    db_session: AsyncSession,
+    fake_redis_client: fakeredis.FakeRedis,
+) -> AsyncGenerator[AsyncClient, None]:
+    """Client without Authorization header — for testing 401 responses."""
+    async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
+        yield db_session
+
+    async def override_get_cache() -> AsyncGenerator[RedisCache, None]:
+        yield RedisCache(fake_redis_client)
+
+    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_cache] = override_get_cache
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test",
+    ) as ac:
+        yield ac
+
+    app.dependency_overrides.clear()
 
 
 @pytest_asyncio.fixture
