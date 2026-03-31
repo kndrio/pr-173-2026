@@ -1,0 +1,44 @@
+# OS / Windows
+desktop.ini
+**/desktop.ini
+Thumbs.db
+$RECYCLE.BIN/
+*.lnk
+
+# macOS
+.DS_Store
+
+# Editors / IDEs
+.vscode/
+.idea/
+*.code-workspace
+
+# Logs & temp files
+*.log
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# Common build/output folders
+dist/
+build/
+coverage/
+.cache/
+
+# Node
+node_modules/
+.npm/
+.yarn/
+.pnpm/
+.pnp/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
