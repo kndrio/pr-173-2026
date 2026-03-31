@@ -11,7 +11,7 @@ from app.core.database import get_db
 from app.core.security import UserPayload, get_current_user
 from app.models import Order, OrderStatus, Priority, VALID_TRANSITIONS
 from app.schemas import OrderCreate, OrderListResponse, OrderResponse, OrderUpdate
-from services.event_service import publish_order_event
+from app.core.events import publish_order_event
 
 logger = structlog.get_logger()
 

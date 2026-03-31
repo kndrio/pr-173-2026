@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, EmailStr, Field, computed_field, model_validator
+from pydantic import BaseModel, EmailStr, Field, computed_field, field_validator
 
 from app.models import OrderStatus, Priority
 
@@ -55,24 +55,16 @@ class OrderResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
-    @model_validator(mode="before")
+    @field_validator("items", mode="before")
     @classmethod
-    def coerce_items_from_json(cls, data: object) -> object:
+    def coerce_items_from_json(cls, v: object) -> object:
         """
-        Explicitly coerce items stored as list[dict] in the JSON column
-        into list[OrderItem].  This is necessary because `from_attributes`
-        alone does not convert nested dicts to nested models.
+        Coerce items stored as list[dict] (from JSON column) into list[OrderItem].
+        Uses field_validator so Pydantic reads the value without mutating the ORM object.
         """
-        if hasattr(data, "__dict__"):
-            # SQLAlchemy ORM object — items is a list of raw dicts
-            raw: object = getattr(data, "items", None)
-            if isinstance(raw, list) and raw and isinstance(raw[0], dict):
-                object.__setattr__(
-                    data,
-                    "items",
-                    [OrderItem(**item) for item in raw],
-                )
-        return data
+        if isinstance(v, list) and v and isinstance(v[0], dict):
+            return [OrderItem(**item) for item in v]
+        return v
 
 
 class OrderListResponse(BaseModel):
