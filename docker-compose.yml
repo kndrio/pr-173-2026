@@ -90,24 +90,29 @@ services:
   # Frontend
   # ---------------------------------------------------------------------------
   shell:
-    profiles: ["frontend"]
     build:
       context: ./frontend/shell
       dockerfile: Dockerfile
     ports:
       - "3000:80"
     depends_on:
-      - auth-service
-      - orders-service
+      auth-service:
+        condition: service_healthy
+      orders-service:
+        condition: service_healthy
     restart: unless-stopped
 
   orders-mfe:
-    profiles: ["frontend"]
     build:
       context: ./frontend/orders-mfe
       dockerfile: Dockerfile
     ports:
       - "3001:80"
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      orders-service:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
