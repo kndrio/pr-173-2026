@@ -34,66 +34,66 @@ curl -X POST http://localhost:8001/api/v1/auth/login \
 
 ### Setup do Monorepo
 
-- [ ] T001 Criar estrutura de diretórios do monorepo conforme plan.md: `services/auth-service/`, `services/orders-service/`, `frontend/shell/`, `frontend/orders-mfe/`, `docs/adr/` ~0.5h
+- [x] T001 Criar estrutura de diretórios do monorepo conforme plan.md: `services/auth-service/`, `services/orders-service/`, `frontend/shell/`, `frontend/orders-mfe/`, `docs/adr/` ~0.5h
   - **Critério**: Todas as pastas existem; `.gitignore` configurado ignorando `.env`, `__pycache__`, `node_modules`, `dist/`
 
-- [ ] T001a [P] Criar `services/auth-service/pyproject.toml` e `services/orders-service/pyproject.toml` com seções `[tool.ruff]` (rules: E, W, F, I; target-version: py311) e `[tool.mypy]` (strict = true, ignore_missing_imports = true) ~0.5h
+- [x] T001a [P] Criar `services/auth-service/pyproject.toml` e `services/orders-service/pyproject.toml` com seções `[tool.ruff]` (rules: E, W, F, I; target-version: py311) e `[tool.mypy]` (strict = true, ignore_missing_imports = true) ~0.5h
   - **Critério**: `ruff check app/` e `mypy app/` executam com as regras configuradas (não defaults); CI T081/T082 dependem deste arquivo existir
 
-- [ ] T001b [P] Criar `frontend/shell/eslint.config.js` e `frontend/orders-mfe/eslint.config.js` com regras: `@typescript-eslint/recommended`, `@typescript-eslint/no-explicit-any: error`, `react-hooks/rules-of-hooks: error` ~0.5h
+- [x] T001b [P] Criar `frontend/shell/eslint.config.js` e `frontend/orders-mfe/eslint.config.js` com regras: `@typescript-eslint/recommended`, `@typescript-eslint/no-explicit-any: error`, `react-hooks/rules-of-hooks: error` ~0.5h
   - **Critério**: `eslint src/` em cada MFE executa com as regras definidas; CI T083 depende deste arquivo existir
 
-- [ ] T002 [P] Criar `.env.example` na raiz com todas as variáveis documentadas: `JWT_SECRET`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, `ANTHROPIC_API_KEY`, `ACCESS_TOKEN_EXPIRE_MINUTES`, `REDIS_URL` ~0.5h
+- [x] T002 [P] Criar `.env.example` na raiz com todas as variáveis documentadas: `JWT_SECRET`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, `ANTHROPIC_API_KEY`, `ACCESS_TOKEN_EXPIRE_MINUTES`, `REDIS_URL` ~0.5h
   - **Critério**: Arquivo contém todas as variáveis com valores de exemplo; comentários explicativos; nenhum secret real no arquivo
 
-- [ ] T003 [P] Criar `docker-compose.yml` na raiz com serviços: `postgres` (PostgreSQL 16, 2 databases via init script), `redis` (Redis 7), `auth-service` (build local), com health checks e depends_on ~1h
+- [x] T003 [P] Criar `docker-compose.yml` na raiz com serviços: `postgres` (PostgreSQL 16, 2 databases via init script), `redis` (Redis 7), `auth-service` (build local), com health checks e depends_on ~1h
   - **Critério**: `docker compose up postgres redis` sobe ambos; `docker compose ps` mostra status healthy; init script cria `auth_db` e `orders_db`
 
 ### Auth Service — Foundation
 
-- [ ] T004 [US1] Criar `services/auth-service/requirements.txt` com dependências: `fastapi`, `uvicorn[standard]`, `sqlalchemy[asyncio]`, `asyncpg`, `alembic`, `pydantic[email]`, `pydantic-settings`, `python-jose[cryptography]`, `passlib[bcrypt]`, `structlog` ~0.5h
+- [x] T004 [US1] Criar `services/auth-service/requirements.txt` com dependências: `fastapi`, `uvicorn[standard]`, `sqlalchemy[asyncio]`, `asyncpg`, `alembic`, `pydantic[email]`, `pydantic-settings`, `python-jose[cryptography]`, `passlib[bcrypt]`, `structlog` ~0.5h
   - **Critério**: `pip install -r requirements.txt` completa sem erros
 
-- [ ] T005 [US1] Criar `services/auth-service/app/core/config.py` com Settings (pydantic-settings): `JWT_SECRET`, `DATABASE_URL`, `ACCESS_TOKEN_EXPIRE_MINUTES=1440`, `ENV`, `LOG_LEVEL` ~0.5h
+- [x] T005 [US1] Criar `services/auth-service/app/core/config.py` com Settings (pydantic-settings): `JWT_SECRET`, `DATABASE_URL`, `ACCESS_TOKEN_EXPIRE_MINUTES=1440`, `ENV`, `LOG_LEVEL` ~0.5h
   - **Critério**: `Settings()` carrega valores do `.env`; erro explícito se `JWT_SECRET` ausente
 
-- [ ] T006 [US1] Criar `services/auth-service/app/core/database.py` com `create_async_engine`, `async_session_factory`, `Base`, e dependency `get_db()` ~0.5h
+- [x] T006 [US1] Criar `services/auth-service/app/core/database.py` com `create_async_engine`, `async_session_factory`, `Base`, e dependency `get_db()` ~0.5h
   - **Critério**: `get_db()` retorna `AsyncSession`; `expire_on_commit=False`
 
-- [ ] T007 [US1] Criar `services/auth-service/app/core/security.py` com: `hash_password(plain)`, `verify_password(plain, hashed)`, `create_access_token(data)`, `decode_token(token)` ~1h
+- [x] T007 [US1] Criar `services/auth-service/app/core/security.py` com: `hash_password(plain)`, `verify_password(plain, hashed)`, `create_access_token(data)`, `decode_token(token)` ~1h
   - **Critério**: `hash_password("abc")` retorna hash bcrypt; `verify_password("abc", hash)` retorna True; `decode_token(create_access_token({"sub":"x"}))["sub"] == "x"`
 
-- [ ] T008 [US1] Criar `services/auth-service/app/models/user.py` com modelo SQLAlchemy `User`: campos `id` (UUID), `full_name`, `email` (unique), `hashed_password`, `role` (Enum), `is_active`, `created_at`, `updated_at` ~0.5h
+- [x] T008 [US1] Criar `services/auth-service/app/models/user.py` com modelo SQLAlchemy `User`: campos `id` (UUID), `full_name`, `email` (unique), `hashed_password`, `role` (Enum), `is_active`, `created_at`, `updated_at` ~0.5h
   - **Critério**: `alembic revision --autogenerate` detecta o modelo; migration cria tabela `users` com índice em `email`
 
-- [ ] T009 [US1] Criar `services/auth-service/alembic/` configurado para `asyncpg`; criar primeira migration `001_create_users_table.py` ~0.5h
+- [x] T009 [US1] Criar `services/auth-service/alembic/` configurado para `asyncpg`; criar primeira migration `001_create_users_table.py` ~0.5h
   - **Critério**: `alembic upgrade head` cria tabela `users` no `auth_db` sem erros
 
-- [ ] T010 [US1] Criar `services/auth-service/app/schemas/user.py` com: `UserCreate`, `UserLogin`, `UserResponse`, `TokenResponse`, `UserListResponse` (com paginação) ~0.5h
+- [x] T010 [US1] Criar `services/auth-service/app/schemas/user.py` com: `UserCreate`, `UserLogin`, `UserResponse`, `TokenResponse`, `UserListResponse` (com paginação) ~0.5h
   - **Critério**: `UserCreate(full_name="x", email="x@x.com", password="12345678")` valida; `UserCreate(password="123")` lança ValidationError
 
-- [ ] T011 [US1] Criar `services/auth-service/app/api/v1/endpoints/auth.py` com `POST /register` (cria usuário, retorna UserResponse 201) e `POST /login` (valida credenciais, retorna TokenResponse 200) ~1.5h
+- [x] T011 [US1] Criar `services/auth-service/app/api/v1/endpoints/auth.py` com `POST /register` (cria usuário, retorna UserResponse 201) e `POST /login` (valida credenciais, retorna TokenResponse 200) ~1.5h
   - **Critério**: Register com email duplicado → 409; senha curta → 422; login com senha errada → 401
 
-- [ ] T012 [US1] Criar `services/auth-service/app/dependencies.py` com `get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db))` que decodifica JWT e retorna User ~0.5h
+- [x] T012 [US1] Criar `services/auth-service/app/dependencies.py` com `get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db))` que decodifica JWT e retorna User ~0.5h
   - **Critério**: Token inválido → 401; token expirado → 401; token válido → User object
 
-- [ ] T013 [US1] Criar `services/auth-service/app/api/v1/endpoints/users.py` com `GET /me` (retorna usuário autenticado) e `GET /users` (lista usuários ativos com paginação) ~0.5h
+- [x] T013 [US1] Criar `services/auth-service/app/api/v1/endpoints/users.py` com `GET /me` (retorna usuário autenticado) e `GET /users` (lista usuários ativos com paginação) ~0.5h
   - **Critério**: `/me` sem token → 401; `/me` com token válido → UserResponse; `/users` retorna lista com `total`, `page`, `pages`
 
-- [ ] T013a [US1] Criar `services/auth-service/app/core/logging.py` configurando structlog: `JSONRenderer` quando `ENV=production`, `ConsoleRenderer` quando `ENV=development`; função `configure_logging()` com campos obrigatórios `service="auth-service"`, `level`, `timestamp` ~0.5h
+- [x] T013a [US1] Criar `services/auth-service/app/core/logging.py` configurando structlog: `JSONRenderer` quando `ENV=production`, `ConsoleRenderer` quando `ENV=development`; função `configure_logging()` com campos obrigatórios `service="auth-service"`, `level`, `timestamp` ~0.5h
   - **Critério**: `configure_logging()` chamado no startup do app; `structlog.get_logger().info("test")` emite JSON válido em ENV=production; Constitution VII satisfeita desde Phase 1
 
-- [ ] T014 [US1] Criar `services/auth-service/app/main.py` com FastAPI app, CORS (origem `http://localhost:3000`), middleware `X-Request-ID` (gera UUID4 se ausente, injeta em structlog context), `GET /health` retornando status do banco, roteamento de endpoints, chamada a `configure_logging()` no startup ~1h
+- [x] T014 [US1] Criar `services/auth-service/app/main.py` com FastAPI app, CORS (origem `http://localhost:3000`), middleware `X-Request-ID` (gera UUID4 se ausente, injeta em structlog context), `GET /health` retornando status do banco, roteamento de endpoints, chamada a `configure_logging()` no startup ~1h
   - **Critério**: `/health` retorna 200 com `{"status":"healthy","database":"connected"}`; todo log de request inclui `request_id`; CORS aceita origem do shell
 
-- [ ] T015 [US1] Criar `services/auth-service/Dockerfile` multi-stage: stage `builder` (instala deps) + stage `runtime` (`python:3.11-slim`, usuário `appuser` non-root, copia só o necessário) ~1h
+- [x] T015 [US1] Criar `services/auth-service/Dockerfile` multi-stage: stage `builder` (instala deps) + stage `runtime` (`python:3.11-slim`, usuário `appuser` non-root, copia só o necessário) ~1h
   - **Critério**: `docker build` completa sem erros; container roda como non-root (`docker exec ... whoami` ≠ `root`); tamanho final < 200MB
 
-- [ ] T016 [US1] Adicionar `auth-service` ao `docker-compose.yml` com build, env vars, port mapping `8001:8001`, depends_on postgres com condition `service_healthy` ~0.5h
+- [x] T016 [US1] Adicionar `auth-service` ao `docker-compose.yml` com build, env vars, port mapping `8001:8001`, depends_on postgres com condition `service_healthy` ~0.5h
   - **Critério**: `docker compose up auth-service` sobe com health check passando; migrations rodam no startup via `command: ["sh","-c","alembic upgrade head && uvicorn..."]`
 
-- [ ] T016a [US1] Criar `services/auth-service/tests/conftest.py` com fixtures básicas (async test client, DB de teste) e 3 testes mínimos em `tests/test_auth_smoke.py`: registro com sucesso, login com sucesso, login com senha errada (401) ~1h
+- [x] T016a [US1] Criar `services/auth-service/tests/conftest.py` com fixtures básicas (async test client, DB de teste) e 3 testes mínimos em `tests/test_auth_smoke.py`: registro com sucesso, login com sucesso, login com senha errada (401) ~1h
   - **Critério**: `pytest tests/test_auth_smoke.py -v` passa com 3 testes ✅; Constitution V satisfeita para Phase 1 — comportamentos de Phase 1 têm cobertura mínima antes de merge
 
 **Checkpoint Phase 1** ✅: Auth completo — registro, login, /me, listagem de usuários, health check, logging estruturado, testes mínimos. `docker compose up auth-service postgres redis` funciona.
@@ -122,80 +122,80 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:8002/api/v1/orders
 
 ### Orders Service — Foundation
 
-- [ ] T017 [US2] Criar `services/orders-service/requirements.txt`: mesmas dependências base + `redis[hiredis]`, `httpx` ~0.25h
+- [x] T017 [US2] Criar `services/orders-service/requirements.txt`: mesmas dependências base + `redis[hiredis]`, `httpx` ~0.25h
   - **Critério**: `pip install -r requirements.txt` completa sem erros
 
-- [ ] T018 [US2] Criar `services/orders-service/app/core/config.py` com Settings: `JWT_SECRET`, `DATABASE_URL` (orders_db), `REDIS_URL`, `ANTHROPIC_API_KEY` (opcional), `REDIS_CACHE_TTL=300` ~0.5h
+- [x] T018 [US2] Criar `services/orders-service/app/core/config.py` com Settings: `JWT_SECRET`, `DATABASE_URL` (orders_db), `REDIS_URL`, `ANTHROPIC_API_KEY` (opcional), `REDIS_CACHE_TTL=300` ~0.5h
   - **Critério**: Settings carrega corretamente; `ANTHROPIC_API_KEY` é `Optional[str] = None`
 
-- [ ] T019 [US2] [P] Criar `services/orders-service/app/core/database.py` (async engine, session factory para `orders_db`) ~0.25h
+- [x] T019 [US2] [P] Criar `services/orders-service/app/core/database.py` (async engine, session factory para `orders_db`) ~0.25h
   - **Critério**: Conexão ao `orders_db` funciona; sessão isolada do `auth_db`
 
-- [ ] T020 [US2] [P] Criar `services/orders-service/app/core/redis.py` com factory `get_redis()` retornando cliente async Redis configurado com `REDIS_URL` ~0.5h
+- [x] T020 [US2] [P] Criar `services/orders-service/app/core/redis.py` com factory `get_redis()` retornando cliente async Redis configurado com `REDIS_URL` ~0.5h
   - **Critério**: `get_redis()` conecta ao Redis; `await redis.ping()` retorna True
 
 ### Orders — Modelos e Migração
 
-- [ ] T021 [US2] Criar `services/orders-service/app/models/order.py` com modelos SQLAlchemy `Order` e `OrderItem` conforme data-model.md; enum `Priority` e `OrderStatus`; relationship `Order.items` com cascade delete ~1h
+- [x] T021 [US2] Criar `services/orders-service/app/models/order.py` com modelos SQLAlchemy `Order` e `OrderItem` conforme data-model.md; enum `Priority` e `OrderStatus`; relationship `Order.items` com cascade delete ~1h
   - **Critério**: `alembic revision --autogenerate` detecta `orders` e `order_items`; índices em `status`, `priority`, `created_at`
 
-- [ ] T022 [US2] Criar `services/orders-service/alembic/` e primeira migration `001_create_orders_tables.py` ~0.5h
+- [x] T022 [US2] Criar `services/orders-service/alembic/` e primeira migration `001_create_orders_tables.py` ~0.5h
   - **Critério**: `alembic upgrade head` cria tabelas no `orders_db`; FK `order_items.order_id → orders.id` com ON DELETE CASCADE
 
 ### Orders — Schemas e Serviços
 
-- [ ] T023 [US2] Criar `services/orders-service/app/schemas/order.py` com: `OrderItemCreate`, `OrderCreate`, `OrderItemResponse`, `OrderResponse` (com itens), `OrderListItemResponse` (sem itens), `OrderListResponse` (paginada com `filters`), `OrderStatusUpdate`, `AIAnalysisResponse` ~1h
+- [x] T023 [US2] Criar `services/orders-service/app/schemas/order.py` com: `OrderItemCreate`, `OrderCreate`, `OrderItemResponse`, `OrderResponse` (com itens), `OrderListItemResponse` (sem itens), `OrderListResponse` (paginada com `filters`), `OrderStatusUpdate`, `AIAnalysisResponse` ~1h
   - **Critério**: `OrderCreate` com `items=[]` lança ValidationError; `OrderItemCreate(quantity=0)` lança ValidationError
 
-- [ ] T024 [US2] Criar `services/orders-service/services/order_service.py` com funções async: `create_order(db, data, user_id)` calculando `total_amount` e `subtotal` de cada item, `get_order(db, order_id)`, `list_orders(db, filters, pagination)` ~2h
+- [x] T024 [US2] Criar `services/orders-service/services/order_service.py` com funções async: `create_order(db, data, user_id)` calculando `total_amount` e `subtotal` de cada item, `get_order(db, order_id)`, `list_orders(db, filters, pagination)` ~2h
   - **Critério**: `create_order` com 2 itens retorna pedido com `total_amount` correto (soma dos subtotais); pedido criado com `status=pendente`
 
-- [ ] T025 [US3] Criar `services/orders-service/services/order_service.py` → adicionar função `update_order_status(db, order_id, new_status)` com validação de transições conforme state machine em data-model.md ~1h
+- [x] T025 [US3] Criar `services/orders-service/services/order_service.py` → adicionar função `update_order_status(db, order_id, new_status)` com validação de transições conforme state machine em data-model.md ~1h
   - **Critério**: `pendente → em_andamento` aceito; `concluido → em_andamento` lança ValueError com mensagem descritiva; `pendente → cancelado` aceito
 
 ### Orders — Cache e Eventos
 
-- [ ] T026 [US4] [P] Criar `services/orders-service/services/cache_service.py` com: `get_orders_cache(redis, key)`, `set_orders_cache(redis, key, data, ttl)`, `invalidate_orders_cache(redis)` usando SCAN + DEL com padrão `orders:list:*` ~1h
+- [x] T026 [US4] [P] Criar `services/orders-service/services/cache_service.py` com: `get_orders_cache(redis, key)`, `set_orders_cache(redis, key, data, ttl)`, `invalidate_orders_cache(redis)` usando SCAN + DEL com padrão `orders:list:*` ~1h
   - **Critério**: `set_orders_cache` persiste; `get_orders_cache` retorna dado; `invalidate_orders_cache` deleta todas as keys `orders:list:*` sem usar `KEYS *`
 
-- [ ] T027 [US2] [P] Criar `services/orders-service/services/event_service.py` com `publish_order_event(redis, event_type, order_id, extra_data)` publicando JSON no canal `orders` ~0.5h
+- [x] T027 [US2] [P] Criar `services/orders-service/services/event_service.py` com `publish_order_event(redis, event_type, order_id, extra_data)` publicando JSON no canal `orders` ~0.5h
   - **Critério**: `publish_order_event(redis, "order_created", uuid, {...})` publica mensagem JSON válida; testável com `redis-cli SUBSCRIBE orders`
 
 ### Orders — Endpoints
 
-- [ ] T028 [US2] Criar `services/orders-service/app/dependencies.py` com `get_current_user` que valida JWT usando `JWT_SECRET` compartilhado (sem chamada HTTP ao auth-service) ~0.5h
+- [x] T028 [US2] Criar `services/orders-service/app/dependencies.py` com `get_current_user` que valida JWT usando `JWT_SECRET` compartilhado (sem chamada HTTP ao auth-service) ~0.5h
   - **Critério**: Token do auth-service é aceito pelo orders-service; token adulterado → 401
 
-- [ ] T029 [US2] Criar `services/orders-service/app/api/v1/endpoints/orders.py` com `POST /orders` (cria pedido, invalida cache, publica evento `order_created`) ~1h
+- [x] T029 [US2] Criar `services/orders-service/app/api/v1/endpoints/orders.py` com `POST /orders` (cria pedido, invalida cache, publica evento `order_created`) ~1h
   - **Critério**: POST com itens → 201 com `total_amount` calculado; POST sem itens → 422; evento publicado no Redis
 
-- [ ] T030 [US4] Criar endpoint `GET /orders` com paginação (`page`, `page_size`), filtros (`status`, `priority`), ordenação; servido do cache Redis se disponível; retorna `filters` com contadores de status e prioridade ~1.5h
+- [x] T030 [US4] Criar endpoint `GET /orders` com paginação (`page`, `page_size`), filtros (`status`, `priority`), ordenação; servido do cache Redis se disponível; retorna `filters` com contadores de status e prioridade ~1.5h
   - **Critério**: Filtro `?status=pendente` retorna só pendentes; paginação `?page=2&page_size=5` retorna página correta; segunda chamada idêntica vem do cache (verificar via log)
 
-- [ ] T031 [US4] Criar endpoint `GET /orders/{order_id}` com dados completos incluindo itens; busca no DB (sem cache) ~0.5h
+- [x] T031 [US4] Criar endpoint `GET /orders/{order_id}` com dados completos incluindo itens; busca no DB (sem cache) ~0.5h
   - **Critério**: ID existente → 200 com `items` array; ID inexistente → 404; pedido de outro usuário → acessível (não há isolamento por usuário no MVP)
 
-- [ ] T032 [US3] Criar endpoint `PATCH /orders/{order_id}/status` com validação de transição, invalidação de cache e publicação de evento `order_updated` ~1h
+- [x] T032 [US3] Criar endpoint `PATCH /orders/{order_id}/status` com validação de transição, invalidação de cache e publicação de evento `order_updated` ~1h
   - **Critério**: Transição válida → 200; transição inválida → 422 com mensagem "Invalid status transition: X → Y"; cache invalidado após update
 
 ### Orders — Main e Docker
 
-- [ ] T032a [US2] Criar `services/orders-service/app/core/logging.py` (mesmo padrão do auth-service; campo `service="orders-service"`; propaga `request_id` recebido via header `X-Request-ID`) ~0.25h
+- [x] T032a [US2] Criar `services/orders-service/app/core/logging.py` (mesmo padrão do auth-service; campo `service="orders-service"`; propaga `request_id` recebido via header `X-Request-ID`) ~0.25h
   - **Critério**: Logging estruturado configurado antes de T033 (main.py); Constitution VII satisfeita desde Phase 2
 
-- [ ] T033 [US2] Criar `services/orders-service/app/main.py` com FastAPI app, CORS (origem `http://localhost:3000`), middleware `X-Request-ID`, `GET /health` verificando DB e Redis, router, chamada a `configure_logging()` ~0.5h
+- [x] T033 [US2] Criar `services/orders-service/app/main.py` com FastAPI app, CORS (origem `http://localhost:3000`), middleware `X-Request-ID`, `GET /health` verificando DB e Redis, router, chamada a `configure_logging()` ~0.5h
   - **Critério**: `/health` retorna `{"status":"healthy","database":"connected","redis":"connected"}`; logs incluem `request_id` e `service="orders-service"`
 
-- [ ] T034 [US2] Criar `services/orders-service/Dockerfile` multi-stage (python:3.11-slim, non-root) ~0.5h
+- [x] T034 [US2] Criar `services/orders-service/Dockerfile` multi-stage (python:3.11-slim, non-root) ~0.5h
   - **Critério**: `docker build` OK; non-root; tamanho < 200MB
 
-- [ ] T035 [US2] Adicionar `orders-service` ao `docker-compose.yml` com port `8002:8002`, depends_on postgres e redis healthy ~0.5h
+- [x] T035 [US2] Adicionar `orders-service` ao `docker-compose.yml` com port `8002:8002`, depends_on postgres e redis healthy ~0.5h
   - **Critério**: `docker compose up orders-service` sobe; `curl http://localhost:8002/health` → 200
 
-- [ ] T035a [US2] Criar `services/orders-service/tests/conftest.py` com fixtures (async test client, DB de teste, Redis mockado) e 3 testes mínimos em `tests/test_orders_smoke.py`: criar pedido com total correto, listar pedidos, transição de status válida ~1h
+- [x] T035a [US2] Criar `services/orders-service/tests/conftest.py` com fixtures (async test client, DB de teste, Redis mockado) e 3 testes mínimos em `tests/test_orders_smoke.py`: criar pedido com total correto, listar pedidos, transição de status válida ~1h
   - **Critério**: `pytest tests/test_orders_smoke.py -v` passa com 3 testes ✅; Constitution V satisfeita para Phase 2
 
-**Checkpoint Phase 2** ✅: Backend completo, logging estruturado ativo, testes mínimos passando. Todos os endpoints funcionam via curl. Redis caching e eventos ativos.
+**Checkpoint Phase 2** ✅: Backend completo, logging estruturado ativo, testes mínimos passando. Todos os endpoints funcionam via curl. Redis caching e eventos ativos. ✅ IMPLEMENTADO
 
 ---
 

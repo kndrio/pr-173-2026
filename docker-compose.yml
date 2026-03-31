@@ -1,0 +1,112 @@
+services:
+  # ---------------------------------------------------------------------------
+  # Infrastructure
+  # ---------------------------------------------------------------------------
+  postgres:
+    build:
+      context: ./docker/postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-pedidos}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pedidos123}
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pedidos} -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Backend Services
+  # ---------------------------------------------------------------------------
+  auth-service:
+    build:
+      context: ./services/auth-service
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-pedidos}:${POSTGRES_PASSWORD:-pedidos123}@postgres:5432/auth_db
+      JWT_SECRET: ${JWT_SECRET}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-1440}
+      ENV: ${ENV:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8001/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  orders-service:
+    build:
+      context: ./services/orders-service
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-pedidos}:${POSTGRES_PASSWORD:-pedidos123}@postgres:5432/orders_db
+      JWT_SECRET: ${JWT_SECRET}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      REDIS_CACHE_TTL: ${REDIS_CACHE_TTL:-300}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ENV: ${ENV:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8002/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Frontend
+  # ---------------------------------------------------------------------------
+  shell:
+    build:
+      context: ./frontend/shell
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - auth-service
+      - orders-service
+    restart: unless-stopped
+
+  orders-mfe:
+    build:
+      context: ./frontend/orders-mfe
+      dockerfile: Dockerfile
+    ports:
+      - "3001:80"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

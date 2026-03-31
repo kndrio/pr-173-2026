@@ -43,3 +43,22 @@ __pycache__/
 .ruff_cache/
 
 .claude/settings.local.json
+
+# Environment secrets — NEVER commit these
+.env
+.env.local
+.env.*.local
+
+# Python virtual envs
+.venv/
+venv/
+env/
+*.egg-info/
+
+# Coverage
+htmlcov/
+.coverage
+coverage.xml
+
+# Docker
+*.pid
