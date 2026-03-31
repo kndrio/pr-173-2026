@@ -1,0 +1,44 @@
+:root {
+  --color-primary: #1351b4;
+  --color-primary-dark: #0c326f;
+  --color-surface: #ffffff;
+  --color-background: #f8f8f8;
+  --color-text: #1a1a1a;
+  --color-text-secondary: #636363;
+  --color-border: #d4d4d4;
+  --color-danger: #e52207;
+  --color-success: #168821;
+  --color-warning: #f0ad00;
+  --status-pendente: #f0ad00;
+  --status-pendente-bg: #fff5cc;
+  --status-em-andamento: #155bcb;
+  --status-em-andamento-bg: #d4e4ff;
+  --status-concluido: #168821;
+  --status-concluido-bg: #d4edda;
+  --status-cancelado: #e52207;
+  --status-cancelado-bg: #fde0dc;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Rawline', 'Segoe UI', system-ui, sans-serif; font-size: 14px; line-height: 1.5; color: var(--color-text); background: var(--color-background); }
+button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; border-radius: 4px; padding: 8px 16px; transition: background-color 0.2s; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+input, select, textarea { font-family: inherit; font-size: 14px; border: 1px solid var(--color-border); border-radius: 4px; padding: 8px 12px; width: 100%; outline: none; }
+input:focus, select:focus, textarea:focus { border-color: var(--color-primary); box-shadow: 0 0 0 2px rgba(19,81,180,0.2); }
+label { display: block; font-size: 13px; font-weight: 500; color: var(--color-text-secondary); margin-bottom: 4px; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 10px 12px; background: var(--color-background); border-bottom: 2px solid var(--color-border); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--color-text-secondary); }
+td { padding: 12px; border-bottom: 1px solid var(--color-border); vertical-align: middle; }
+tr:hover td { background: #f0f4ff; }
+.btn-primary { background: var(--color-primary); color: white; font-weight: 600; }
+.btn-primary:hover:not(:disabled) { background: var(--color-primary-dark); }
+.btn-secondary { background: transparent; color: var(--color-primary); border: 1px solid var(--color-primary); font-weight: 600; }
+.btn-danger { background: var(--color-danger); color: white; font-weight: 600; }
+.btn-success { background: var(--color-success); color: white; font-weight: 600; }
+.card { background: var(--color-surface); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.12); padding: 24px; }
+.form-group { margin-bottom: 16px; }
+.alert { padding: 12px 16px; border-radius: 4px; margin-bottom: 16px; font-size: 14px; }
+.alert-error { background: var(--status-cancelado-bg); color: var(--color-danger); border: 1px solid var(--status-cancelado); }
+.alert-success { background: var(--status-concluido-bg); color: var(--color-success); border: 1px solid var(--status-concluido); }
+.spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+.spinner-dark { border-color: rgba(0,0,0,0.1); border-top-color: var(--color-primary); }
+@keyframes spin { to { transform: rotate(360deg); } }
