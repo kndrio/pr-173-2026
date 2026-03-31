@@ -20,7 +20,8 @@ class Settings(BaseSettings):
     redis_cache_ttl: int = 300  # 5 minutes
 
     # AI (optional)
-    anthropic_api_key: str | None = None
+    # anthropic_api_key: str | None = None  # replaced by Pollinations
+    pollinations_api_key: str | None = None
 
     # Application
     env: str = "development"

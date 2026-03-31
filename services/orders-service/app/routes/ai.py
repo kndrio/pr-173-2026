@@ -66,12 +66,12 @@ async def ai_analysis(
 
     logger.info("ai_analysis_requested", order_id=str(order_id))
 
-    if not settings.anthropic_api_key:
+    if not settings.pollinations_api_key:
         logger.info("ai_analysis_fallback", reason="no_api_key", order_id=str(order_id))
         return _rule_based_analysis(order)
 
     # NOTE: Production deployments should add per-user rate limiting here
-    # (e.g. fastapi-limiter backed by Redis) to prevent unbounded Anthropic spend.
+    # (e.g. fastapi-limiter backed by Redis) to prevent unbounded API spend.
 
     try:
         # customer_email and created_by intentionally excluded — data minimisation
@@ -88,35 +88,37 @@ async def ai_analysis(
 
         async with httpx.AsyncClient(timeout=30.0) as http:
             resp = await http.post(
-                "https://api.anthropic.com/v1/messages",
+                "https://gen.pollinations.ai/v1/chat/completions",  # was: https://api.anthropic.com/v1/messages
                 headers={
-                    "x-api-key": settings.anthropic_api_key,
-                    "anthropic-version": "2023-06-01",
-                    "content-type": "application/json",
+                    "Authorization": f"Bearer {settings.pollinations_api_key}",  # was: "x-api-key": settings.anthropic_api_key
+                    "Content-Type": "application/json",                           # was: "anthropic-version": "2023-06-01"
                 },
                 json={
-                    "model": "claude-sonnet-4-20250514",
+                    "model": "qwen-safety",                          # was: "claude-sonnet-4-20250514"
                     "max_tokens": 1024,
-                    "system": (
-                        "Você é um analista de pedidos governamentais. Analise os dados "
-                        "do pedido e retorne APENAS um JSON com: suggested_priority "
-                        "(baixa/media/alta/urgente), executive_summary (resumo executivo "
-                        "em português, max 3 frases), observations (lista de até 3 "
-                        "observações relevantes)."
-                    ),
                     "messages": [
-                        {"role": "user", "content": json.dumps(order_data, ensure_ascii=False)}
+                        {
+                            "role": "system",                        # Anthropic used top-level "system" key; OpenAI uses role
+                            "content": (
+                                "Você é um analista de pedidos governamentais. Analise os dados "
+                                "do pedido e retorne APENAS um JSON com: suggested_priority "
+                                "(baixa/media/alta/urgente), executive_summary (resumo executivo "
+                                "em português, max 3 frases), observations (lista de até 3 "
+                                "observações relevantes)."
+                            ),
+                        },
+                        {"role": "user", "content": json.dumps(order_data, ensure_ascii=False)},
                     ],
                 },
             )
         resp.raise_for_status()
-        content = resp.json()["content"][0]["text"]
+        content = resp.json()["choices"][0]["message"]["content"]  # was: resp.json()["content"][0]["text"]
         parsed = json.loads(content)
         return AIAnalysisResponse(
             suggested_priority=parsed["suggested_priority"],
             executive_summary=parsed["executive_summary"],
             observations=parsed["observations"],
-            model_used="claude-sonnet-4-20250514",
+            model_used="qwen-safety",
             analyzed_at=datetime.now(timezone.utc),
         )
     except httpx.HTTPError:
