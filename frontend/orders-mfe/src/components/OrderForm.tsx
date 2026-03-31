@@ -35,7 +35,13 @@ export default function OrderForm() {
       const o = await createOrder({ ...form, items: valid.map((it) => ({ name: it.name, quantity: Number(it.quantity), unit_price: Number(it.unit_price).toFixed(2) })) })
       navigate(`../${o.id}`)
     } catch (err) {
-      setError(axios.isAxiosError(err) ? (err.response?.data?.detail ?? 'Erro ao criar pedido') : 'Erro inesperado')
+      if (axios.isAxiosError(err)) {
+        const detail = err.response?.data?.detail
+        const msg = Array.isArray(detail) ? (detail[0]?.msg ?? 'Erro ao criar pedido') : (typeof detail === 'string' ? detail : 'Erro ao criar pedido')
+        setError(msg)
+      } else {
+        setError('Erro inesperado')
+      }
     } finally {
       setLoading(false)
     }
